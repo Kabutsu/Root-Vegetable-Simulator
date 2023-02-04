@@ -96,7 +96,7 @@ namespace Character
             
                 if (_rigidBody.velocity.magnitude >= DamageThreshold)
                 {
-                    enemy.WasHit(myMomentum);
+                    enemy.WasHit(myMomentum, _rigidBody.velocity);
                 }
             }
         }
