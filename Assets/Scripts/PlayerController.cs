@@ -21,6 +21,8 @@ namespace Character
         private Image _healthSliderImage;
         private float _speed;
 
+        private bool _isPaused = false;
+
         [SerializeField]
         private float DamageThreshold = 7.5f;
 
@@ -44,6 +46,9 @@ namespace Character
         {
             Move();
         }
+
+        public void Pause() => _isPaused = true;
+        public void Resume() => _isPaused = false;
 
         private void Move()
         {
@@ -94,27 +99,38 @@ namespace Character
 
         void OnTriggerEnter2D(Collider2D collision)
         {
-            var enemy = collision.gameObject.GetComponent<EnemyController>();
-
-            if (enemy != null)
+            if(!_isPaused)
             {
-                var myMomentum = _rigidBody.velocity.magnitude * _rigidBody.mass;
-            
-                if (_rigidBody.velocity.magnitude >= DamageThreshold)
+                var enemy = collision.gameObject.GetComponent<EnemyController>();
+
+                if (enemy != null)
                 {
-                    enemy.WasHit(myMomentum, _rigidBody.velocity);
+                    var myMomentum = _rigidBody.velocity.magnitude * _rigidBody.mass;
+            
+                    if (_rigidBody.velocity.magnitude >= DamageThreshold)
+                    {
+                        enemy.WasHit(myMomentum, _rigidBody.velocity);
+                    }
                 }
             }
         }
 
         private void OnTriggerStay2D(Collider2D collision)
         {
-            var enemy = collision.gameObject.GetComponent<EnemyController>();
-            if (enemy != null && !enemy.Staggered && _rigidBody.velocity.magnitude < DamageThreshold)
+            if (!_isPaused)
             {
-                Health -= enemy.DmgPerFrame;
-                HealthSlider.value = Mathf.Max(Health, 0f);
-                _healthSliderImage.LerpColor3(Color.green, Color.yellow, Color.red, 0.5f, Health / 100f);
+                var enemy = collision.gameObject.GetComponent<EnemyController>();
+                if (enemy != null && !enemy.Staggered && _rigidBody.velocity.magnitude < DamageThreshold)
+                {
+                    Health -= enemy.DmgPerFrame;
+                    HealthSlider.value = Mathf.Max(Health, 0f);
+                    _healthSliderImage.LerpColor3(Color.green, Color.yellow, Color.red, 0.5f, Health / 100f);
+
+                    if (Health <= 0f)
+                    {
+                        FindObjectOfType<GameController>().GameOver();
+                    }
+                }
             }
         }
     }
