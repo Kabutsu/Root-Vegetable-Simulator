@@ -37,7 +37,7 @@ namespace Character
             if (_input.move == Vector2.zero) targetSpeed = 0.0f;
 
             // a reference to the players current horizontal velocity
-            float currentHorizontalSpeed = new Vector2(_rigidBody.velocity.x, _rigidBody.velocity.y).magnitude;
+            float currentHorizontalSpeed = _rigidBody.velocity.magnitude;
 
             float speedOffset = 0.1f;
             float inputMagnitude = _input.dash ? 1 : _input.move.magnitude;
@@ -57,12 +57,23 @@ namespace Character
             }
 
             // set player's velocity
-            _rigidBody.velocity = _input.move * _speed;
+            _rigidBody.AddForce(_input.move * _speed);
+            //transform.Translate(_input.move * _speed * Time.deltaTime);
+            //_rigidBody.velocity = _input.move * _speed;
         }
 
         void OnTriggerEnter2D(Collider2D collision)
         {
-            Debug.Log("Trigger!");
+            var myMomentum = _rigidBody.velocity.magnitude * _rigidBody.mass;
+            var enMomentum = collision.attachedRigidbody.velocity.magnitude * collision.attachedRigidbody.velocity.magnitude;
+
+            Debug.Log($"MyMomentum: ${myMomentum}");
+            Debug.Log($"EnMomentum: ${enMomentum}");
+
+            if (myMomentum >= enMomentum)
+            {
+                collision.attachedRigidbody.gameObject.GetComponent<EnemyController>().WasHit(myMomentum);
+            }
         }
 
         private void OnTriggerStay2D(Collider2D collision)
