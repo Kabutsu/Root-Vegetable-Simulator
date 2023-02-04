@@ -9,14 +9,14 @@ namespace Character
         public float MoveSpeed = 5f;
         public float DashSpeed = 15f;
         public float SpeedChangeRate = 12.5f;
+        public float Health = 100f;
 
         private Rigidbody2D _rigidBody;
         private InputControlsInputs _input;
         private float _speed;
 
         [SerializeField]
-        private float DamageThreshold = 6.0f;
-
+        private float DamageThreshold = 7.5f;
 
         // Start is called before the first frame update
         void Start()
@@ -27,6 +27,11 @@ namespace Character
 
         // Update is called once per frame
         void Update()
+        {
+            //Move();
+        }
+
+        private void FixedUpdate()
         {
             Move();
         }
@@ -61,8 +66,6 @@ namespace Character
 
             // set player's velocity
             _rigidBody.AddForce(_input.move * _speed);
-            //transform.Translate(_input.move * _speed * Time.deltaTime);
-            //_rigidBody.velocity = _input.move * _speed;
         }
 
         void OnTriggerEnter2D(Collider2D collision)
@@ -77,9 +80,10 @@ namespace Character
 
         private void OnTriggerStay2D(Collider2D collision)
         {
-            if (_rigidBody.velocity.magnitude < DamageThreshold)
+            var enemy = collision.gameObject.GetComponent<EnemyController>();
+            if (enemy != null && !enemy.Staggered && _rigidBody.velocity.magnitude < DamageThreshold)
             {
-                Debug.Log("Receiving Damage");
+                Health -= enemy.DmgPerFrame;
             }
         }
     }
