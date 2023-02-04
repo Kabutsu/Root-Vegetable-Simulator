@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Assets.Scripts;
 
 namespace Character
@@ -11,8 +10,11 @@ namespace Character
         public float SpeedChangeRate = 12.5f;
         public float Health = 100f;
 
+        public float BGSlowDown = 100f;
+
         private Rigidbody2D _rigidBody;
         private InputControlsInputs _input;
+        private ScrollBackground _background;
         private float _speed;
 
         [SerializeField]
@@ -23,6 +25,7 @@ namespace Character
         {
             _rigidBody = GetComponent<Rigidbody2D>();
             _input = GetComponent<InputControlsInputs>();
+            _background = GetComponentInChildren<ScrollBackground>();
         }
 
         // Update is called once per frame
@@ -42,7 +45,15 @@ namespace Character
             float targetSpeed = _input.dash ? DashSpeed : MoveSpeed;
 
             // if there is no input, set the target speed to 0
-            if (_input.move == Vector2.zero) targetSpeed = 0.0f;
+            if (_input.move == Vector2.zero)
+            {
+                targetSpeed = 0.0f;
+            }
+            // if there is an input, move the background
+            else
+            {
+                
+            }
 
             // a reference to the players current horizontal velocity
             float currentHorizontalSpeed = _rigidBody.velocity.magnitude;
@@ -63,6 +74,13 @@ namespace Character
             {
                 _speed = targetSpeed;
             }
+
+            Vector2 offset = _input.move * (_speed * Time.deltaTime / BGSlowDown);
+
+            if (_rigidBody.velocity.x == 0) offset.x = 0;
+            if (_rigidBody.velocity.y == 0) offset.y = 0;
+
+            _background.Move(offset);
 
             // set player's velocity
             _rigidBody.AddForce(_input.move * _speed);

@@ -34,7 +34,7 @@ public class EnemyController : MonoBehaviour
         _rigidBody = GetComponent<Rigidbody2D>();
         _localScale = transform.localScale;
 
-        _fluctuationBound = _goal.GetComponent<CircleCollider2D>().radius;
+        _fluctuationBound = Mathf.Max(_goal.transform.lossyScale.x, _goal.transform.lossyScale.y);
 
         _fluctuation = new Vector3(
             Random.Range(-_fluctuationBound, _fluctuationBound),
