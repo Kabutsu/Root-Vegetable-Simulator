@@ -1,5 +1,8 @@
 using UnityEngine;
+using UnityEngine.UI;
 using Assets.Scripts;
+using Assets.Scripts.Extensions;
+using System.Linq;
 
 namespace Character
 {
@@ -15,10 +18,14 @@ namespace Character
         private Rigidbody2D _rigidBody;
         private InputControlsInputs _input;
         private ScrollBackground _background;
+        private Image _healthSliderImage;
         private float _speed;
 
         [SerializeField]
         private float DamageThreshold = 7.5f;
+
+        [SerializeField]
+        private Slider HealthSlider;
 
         // Start is called before the first frame update
         void Start()
@@ -26,12 +33,11 @@ namespace Character
             _rigidBody = GetComponent<Rigidbody2D>();
             _input = GetComponent<InputControlsInputs>();
             _background = GetComponentInChildren<ScrollBackground>();
-        }
 
-        // Update is called once per frame
-        void Update()
-        {
-            //Move();
+            _healthSliderImage = HealthSlider
+                .GetComponentsInChildren<Image>()
+                .Where(x => x.name.Contains("Fill"))
+                .FirstOrDefault();
         }
 
         private void FixedUpdate()
@@ -107,6 +113,8 @@ namespace Character
             if (enemy != null && !enemy.Staggered && _rigidBody.velocity.magnitude < DamageThreshold)
             {
                 Health -= enemy.DmgPerFrame;
+                HealthSlider.value = Mathf.Max(Health, 0f);
+                _healthSliderImage.LerpColor3(Color.green, Color.yellow, Color.red, 0.5f, Health / 100f);
             }
         }
     }
