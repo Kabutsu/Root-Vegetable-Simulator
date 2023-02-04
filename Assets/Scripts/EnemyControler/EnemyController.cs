@@ -9,9 +9,12 @@ public class EnemyController : MonoBehaviour
     public bool Staggered = false;
 
     private PlayerController _goal;
+    private EnemyManager _enemyManager;
     private Rigidbody2D _rigidBody;
     private Vector3 _directionToPlayer;
     private Vector3 _localScale;
+    private Vector3 _fluctuation;
+    private float _fluctuationBound;
 
     [SerializeField]
     private float Health = 2.5f;
@@ -22,12 +25,22 @@ public class EnemyController : MonoBehaviour
     [SerializeField]
     private float MovementSpeed = 1.5f;
 
+
     // Start is called before the first frame update
     void Start()
     {
-        _rigidBody = GetComponent<Rigidbody2D>();
         _goal = FindObjectOfType<PlayerController>();
+        _enemyManager = FindObjectOfType<EnemyManager>();
+        _rigidBody = GetComponent<Rigidbody2D>();
         _localScale = transform.localScale;
+
+        _fluctuationBound = _goal.GetComponent<CircleCollider2D>().radius;
+
+        _fluctuation = new Vector3(
+            Random.Range(-_fluctuationBound, _fluctuationBound),
+            Random.Range(-_fluctuationBound, _fluctuationBound),
+            0.0f
+        );
     }
 
     private void FixedUpdate()
@@ -37,7 +50,9 @@ public class EnemyController : MonoBehaviour
 
     private void MoveEnemy()
     {
-        _directionToPlayer = (_goal.transform.position - transform.position).normalized;
+        Vector3 goalPosition = _goal.transform.position + _fluctuation;
+
+        _directionToPlayer = (goalPosition - transform.position).normalized;
         transform.Translate(new Vector2(_directionToPlayer.x, _directionToPlayer.y) * MovementSpeed * Time.deltaTime);
     }
 
@@ -68,6 +83,7 @@ public class EnemyController : MonoBehaviour
 
     private void Despawn()
     {
+        _enemyManager.DeRegister();
         Destroy(gameObject);
     }
 
