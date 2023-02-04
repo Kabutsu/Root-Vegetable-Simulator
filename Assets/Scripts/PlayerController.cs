@@ -70,11 +70,16 @@ namespace Character
 
         void OnTriggerEnter2D(Collider2D collision)
         {
-            var myMomentum = _rigidBody.velocity.magnitude * _rigidBody.mass;
-            
-            if (_rigidBody.velocity.magnitude >= DamageThreshold)
+            var enemy = collision.gameObject.GetComponent<EnemyController>();
+
+            if (enemy != null)
             {
-                collision.attachedRigidbody.gameObject.GetComponent<EnemyController>().WasHit(myMomentum);
+                var myMomentum = _rigidBody.velocity.magnitude * _rigidBody.mass;
+            
+                if (_rigidBody.velocity.magnitude >= DamageThreshold)
+                {
+                    enemy.WasHit(myMomentum);
+                }
             }
         }
 
