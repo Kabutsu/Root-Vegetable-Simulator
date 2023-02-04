@@ -14,6 +14,9 @@ namespace Character
         private InputControlsInputs _input;
         private float _speed;
 
+        [SerializeField]
+        private float DamageThreshold = 6.0f;
+
 
         // Start is called before the first frame update
         void Start()
@@ -65,12 +68,8 @@ namespace Character
         void OnTriggerEnter2D(Collider2D collision)
         {
             var myMomentum = _rigidBody.velocity.magnitude * _rigidBody.mass;
-            var enMomentum = collision.attachedRigidbody.velocity.magnitude * collision.attachedRigidbody.velocity.magnitude;
-
-            Debug.Log($"MyMomentum: ${myMomentum}");
-            Debug.Log($"EnMomentum: ${enMomentum}");
-
-            if (myMomentum >= enMomentum)
+            
+            if (_rigidBody.velocity.magnitude >= DamageThreshold)
             {
                 collision.attachedRigidbody.gameObject.GetComponent<EnemyController>().WasHit(myMomentum);
             }
@@ -78,7 +77,10 @@ namespace Character
 
         private void OnTriggerStay2D(Collider2D collision)
         {
-            //ToDo: Deal Damage
+            if (_rigidBody.velocity.magnitude < DamageThreshold)
+            {
+                Debug.Log("Receiving Damage");
+            }
         }
     }
 }
