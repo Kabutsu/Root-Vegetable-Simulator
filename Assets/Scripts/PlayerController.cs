@@ -1,6 +1,8 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using Assets.Scripts;
+using Assets.Scripts.Extensions;
+using System.Linq;
 
 namespace Character
 {
@@ -11,24 +13,33 @@ namespace Character
         public float SpeedChangeRate = 12.5f;
         public float Health = 100f;
 
+        public float BGSlowDown = 100f;
+
         private Rigidbody2D _rigidBody;
         private InputControlsInputs _input;
+        private ScrollBackground _background;
+        private Image _healthSliderImage;
         private float _speed;
+
+        private bool _isPaused = false;
 
         [SerializeField]
         private float DamageThreshold = 7.5f;
+
+        [SerializeField]
+        private Slider HealthSlider;
 
         // Start is called before the first frame update
         void Start()
         {
             _rigidBody = GetComponent<Rigidbody2D>();
             _input = GetComponent<InputControlsInputs>();
-        }
+            _background = GetComponentInChildren<ScrollBackground>();
 
-        // Update is called once per frame
-        void Update()
-        {
-            //Move();
+            _healthSliderImage = HealthSlider
+                .GetComponentsInChildren<Image>()
+                .Where(x => x.name.Contains("Fill"))
+                .FirstOrDefault();
         }
 
         private void FixedUpdate()
@@ -36,13 +47,24 @@ namespace Character
             Move();
         }
 
+        public void Pause() => _isPaused = true;
+        public void Resume() => _isPaused = false;
+
         private void Move()
         {
             // set target speed based on move speed, sprint speed and if sprint is pressed
             float targetSpeed = _input.dash ? DashSpeed : MoveSpeed;
 
             // if there is no input, set the target speed to 0
-            if (_input.move == Vector2.zero) targetSpeed = 0.0f;
+            if (_input.move == Vector2.zero)
+            {
+                targetSpeed = 0.0f;
+            }
+            // if there is an input, move the background
+            else
+            {
+                
+            }
 
             // a reference to the players current horizontal velocity
             float currentHorizontalSpeed = _rigidBody.velocity.magnitude;
@@ -64,31 +86,51 @@ namespace Character
                 _speed = targetSpeed;
             }
 
+            Vector2 offset = _input.move * (_speed * Time.deltaTime / BGSlowDown);
+
+            if (_rigidBody.velocity.x == 0) offset.x = 0;
+            if (_rigidBody.velocity.y == 0) offset.y = 0;
+
+            _background.Move(offset);
+
             // set player's velocity
             _rigidBody.AddForce(_input.move * _speed);
         }
 
         void OnTriggerEnter2D(Collider2D collision)
         {
-            var enemy = collision.gameObject.GetComponent<EnemyController>();
-
-            if (enemy != null)
+            if(!_isPaused)
             {
-                var myMomentum = _rigidBody.velocity.magnitude * _rigidBody.mass;
-            
-                if (_rigidBody.velocity.magnitude >= DamageThreshold)
+                var enemy = collision.gameObject.GetComponent<EnemyController>();
+
+                if (enemy != null)
                 {
-                    enemy.WasHit(myMomentum);
+                    var myMomentum = _rigidBody.velocity.magnitude * _rigidBody.mass;
+            
+                    if (_rigidBody.velocity.magnitude >= DamageThreshold)
+                    {
+                        enemy.WasHit(myMomentum, _rigidBody.velocity);
+                    }
                 }
             }
         }
 
         private void OnTriggerStay2D(Collider2D collision)
         {
-            var enemy = collision.gameObject.GetComponent<EnemyController>();
-            if (enemy != null && !enemy.Staggered && _rigidBody.velocity.magnitude < DamageThreshold)
+            if (!_isPaused)
             {
-                Health -= enemy.DmgPerFrame;
+                var enemy = collision.gameObject.GetComponent<EnemyController>();
+                if (enemy != null && !enemy.Staggered && _rigidBody.velocity.magnitude < DamageThreshold)
+                {
+                    Health -= enemy.DmgPerFrame;
+                    HealthSlider.value = Mathf.Max(Health, 0f);
+                    _healthSliderImage.LerpColor3(Color.green, Color.yellow, Color.red, 0.5f, Health / 100f);
+
+                    if (Health <= 0f)
+                    {
+                        FindObjectOfType<GameController>().GameOver();
+                    }
+                }
             }
         }
     }

@@ -1,22 +1,21 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class EnemyManager : MonoBehaviour
 {
     public int MaxEnemies { get; private set; } = 10;
+
     private int _enemies;
+    private int _score;
+
+    [SerializeField]
+    private Text _scoreText;
 
     // Start is called before the first frame update
     void Start()
     {
         _enemies = 0;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        _score = 0;
     }
 
     public int SetMaxEnemies(int newMax)
@@ -39,5 +38,10 @@ public class EnemyManager : MonoBehaviour
     public void DeRegister()
     {
         _enemies--;
+        _score++;
+
+        _scoreText.text = _score.ToString();
+
+        if (_score % 3 == 0) MaxEnemies++;
     }
 }

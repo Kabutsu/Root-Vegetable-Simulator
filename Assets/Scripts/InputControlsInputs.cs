@@ -10,6 +10,7 @@ namespace Assets.Scripts
         public bool dash;
 
         private bool canDash = true;
+        private bool isPaused = false;
 
         [SerializeField]
         private float dashDuration = 0.45f;
@@ -41,6 +42,22 @@ namespace Assets.Scripts
 
             yield return new WaitForSeconds(dashCooldown);
             canDash = true;
+        }
+
+        public void OnMenu(InputValue value)
+        {
+            var gameController = FindObjectOfType<GameController>();
+
+            if (isPaused)
+            {
+                gameController.ResumeGame();
+                isPaused = false;
+            }
+            else
+            {
+                gameController.PauseGame();
+                isPaused = true;
+            }
         }
     }
 }

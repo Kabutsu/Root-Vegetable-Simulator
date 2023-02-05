@@ -1,6 +1,5 @@
 using Character;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyController : MonoBehaviour
@@ -34,7 +33,8 @@ public class EnemyController : MonoBehaviour
         _rigidBody = GetComponent<Rigidbody2D>();
         _localScale = transform.localScale;
 
-        _fluctuationBound = _goal.GetComponent<CircleCollider2D>().radius;
+        var playerSpriteSize = _goal.GetComponent<SpriteRenderer>().size / 2f;
+        _fluctuationBound = Mathf.Max(playerSpriteSize.x, playerSpriteSize.y);
 
         _fluctuation = new Vector3(
             Random.Range(-_fluctuationBound, _fluctuationBound),
@@ -50,10 +50,13 @@ public class EnemyController : MonoBehaviour
 
     private void MoveEnemy()
     {
-        Vector3 goalPosition = _goal.transform.position + _fluctuation;
+        if (!Staggered)
+        {
+            Vector3 goalPosition = _goal.transform.position + _fluctuation;
 
-        _directionToPlayer = (goalPosition - transform.position).normalized;
-        transform.Translate(new Vector2(_directionToPlayer.x, _directionToPlayer.y) * MovementSpeed * Time.deltaTime);
+            _directionToPlayer = (goalPosition - transform.position).normalized;
+            transform.Translate(new Vector2(_directionToPlayer.x, _directionToPlayer.y) * MovementSpeed * Time.deltaTime);
+        }
     }
 
     private void LateUpdate()
@@ -68,17 +71,13 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    public void WasHit(float momentum)
+    public void WasHit(float momentum, Vector2 velocity)
     {
         Health -= momentum;
 
-        if (Health <= 0.0f)
-        {
-            Despawn();
-            return;
-        }
-
-        StartCoroutine(Stagger());
+        var direction = velocity.normalized;
+        var distance = (direction * momentum * StaggerCooldown) / 2f;
+        StartCoroutine(Stagger(distance));
     }
 
     private void Despawn()
@@ -87,12 +86,30 @@ public class EnemyController : MonoBehaviour
         Destroy(gameObject);
     }
 
-    private IEnumerator Stagger()
+    private IEnumerator Stagger(Vector2 byDistance)
     {
         Staggered = true;
 
-        yield return new WaitForSeconds(StaggerCooldown);
+        Vector3 startingPos = transform.position;
+        Vector3 finalPos = transform.position + new Vector3(byDistance.x, byDistance.y, transform.position.z);
 
-        Staggered = false;
+        float elapsed = 0;
+
+        while (elapsed < (StaggerCooldown / 2f))
+        {
+            transform.position = Vector3.Lerp(startingPos, finalPos, (2f * elapsed) / StaggerCooldown);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (Health <= 0.0f)
+        {
+            Despawn();
+        }
+        else
+        {
+            yield return new WaitForSeconds(StaggerCooldown / 2f);
+            Staggered = false;
+        }
     }
 }
