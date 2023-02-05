@@ -45,6 +45,7 @@ namespace Assets.Scripts
         private IEnumerator ResetDash()
         {
             var playerController = FindObjectOfType<PlayerController>();
+            playerController.PlaySound();
             playerController.ManageRumble();
 
             canDash = false;

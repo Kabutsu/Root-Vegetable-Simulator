@@ -24,6 +24,7 @@ namespace Character
         private InputControlsInputs _input;
         private ScrollBackground _background;
         private Image _healthSliderImage;
+        private AudioSource _audio;
         private float _speed;
         private int _currentAttackers = 0;
 
@@ -35,6 +36,14 @@ namespace Character
 
         [SerializeField]
         private Slider HealthSlider;
+
+        [SerializeField]
+        private AudioClip[] DashSound = new AudioClip[3];
+
+        private void Awake()
+        {
+            _audio = GetComponent<AudioSource>();
+        }
 
         // Start is called before the first frame update
         void Start()
@@ -90,6 +99,11 @@ namespace Character
                     DualShock4GamepadHID.current.SetLightBarColor(DataExtensions.LerpColor3(Color.green, Color.yellow, Color.white, 0.5f, Health / 100f));
                 }
             }
+        }
+
+        public void PlaySound()
+        {
+            _audio.PlayOneShot(DashSound[Random.Range(0, 2)]);
         }
 
         private void SetRumble(float lowFrequency, float highFrequency)
