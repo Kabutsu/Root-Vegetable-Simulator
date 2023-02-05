@@ -6,6 +6,7 @@ public class ScrollBackground : MonoBehaviour
 {
     public float HorizontalSpeed = 0.2f;
     public float VerticalSpeed = 0.2f;
+    public bool ScrollAutomatically = false;
 
     private Renderer _renderer;
 
@@ -13,6 +14,12 @@ public class ScrollBackground : MonoBehaviour
     void Start()
     {
         _renderer = GetComponent<Renderer>();
+        if (!ScrollAutomatically) enabled = false;
+    }
+
+    private void FixedUpdate()
+    {
+        _renderer.material.mainTextureOffset = new Vector2(Time.time * HorizontalSpeed, Time.time * VerticalSpeed);
     }
 
     public void Move(Vector2 offset)

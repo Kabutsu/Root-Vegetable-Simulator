@@ -63,6 +63,8 @@ namespace Assets.Scripts
         {
             var gameController = FindObjectOfType<GameController>();
 
+            if (gameController.IsGameOver) return;
+
             if (isPaused)
             {
                 gameController.ResumeGame();
