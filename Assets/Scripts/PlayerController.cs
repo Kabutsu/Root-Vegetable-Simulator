@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using Assets.Scripts;
 using Assets.Scripts.Extensions;
 using System.Linq;
@@ -8,6 +9,8 @@ namespace Character
 {
     public class PlayerController : MonoBehaviour
     {
+        public Vector2 DashRumble = new Vector2(0.75f, 0.25f);
+        public Vector2 HurtingRumble = new Vector2(0.25f, 0.75f);
         public float MoveSpeed = 5f;
         public float DashSpeed = 15f;
         public float SpeedChangeRate = 12.5f;
@@ -20,6 +23,7 @@ namespace Character
         private ScrollBackground _background;
         private Image _healthSliderImage;
         private float _speed;
+        private int _currentAttackers = 0;
 
         private bool _isPaused = false;
 
@@ -49,6 +53,22 @@ namespace Character
 
         public void Pause() => _isPaused = true;
         public void Resume() => _isPaused = false;
+
+        public void ManageRumble()
+        {
+            if(_input.dash)
+            {
+                Gamepad.current.SetMotorSpeeds(DashRumble.x, DashRumble.y);
+            }
+            else if (_currentAttackers > 0)
+            {
+                Gamepad.current.SetMotorSpeeds(HurtingRumble.x, HurtingRumble.y);
+            }
+            else
+            {
+                Gamepad.current.ResetHaptics();
+            }
+        }
 
         private void Move()
         {
@@ -99,38 +119,46 @@ namespace Character
 
         void OnTriggerEnter2D(Collider2D collision)
         {
-            if(!_isPaused)
+            if(!_isPaused && collision.gameObject.TryGetComponent<EnemyController>(out var enemy))
             {
-                var enemy = collision.gameObject.GetComponent<EnemyController>();
+                _currentAttackers++;
 
-                if (enemy != null)
-                {
-                    var myMomentum = _rigidBody.velocity.magnitude * _rigidBody.mass;
+                ManageRumble();
+
+                var myMomentum = _rigidBody.velocity.magnitude * _rigidBody.mass;
             
-                    if (_rigidBody.velocity.magnitude >= DamageThreshold)
-                    {
-                        enemy.WasHit(myMomentum, _rigidBody.velocity);
-                    }
+                if (_rigidBody.velocity.magnitude >= DamageThreshold)
+                {
+                    enemy.WasHit(myMomentum, _rigidBody.velocity);
                 }
             }
         }
 
         private void OnTriggerStay2D(Collider2D collision)
         {
-            if (!_isPaused)
+            if (!_isPaused
+                && collision.gameObject.TryGetComponent<EnemyController>(out var enemy)
+                && !enemy.Staggered
+                && _rigidBody.velocity.magnitude < DamageThreshold)
             {
-                var enemy = collision.gameObject.GetComponent<EnemyController>();
-                if (enemy != null && !enemy.Staggered && _rigidBody.velocity.magnitude < DamageThreshold)
-                {
-                    Health -= enemy.DmgPerFrame;
-                    HealthSlider.value = Mathf.Max(Health, 0f);
-                    _healthSliderImage.LerpColor3(Color.green, Color.yellow, Color.red, 0.5f, Health / 100f);
+                Health -= enemy.DmgPerFrame;
+                HealthSlider.value = Mathf.Max(Health, 0f);
+                _healthSliderImage.LerpColor3(Color.green, Color.yellow, Color.red, 0.5f, Health / 100f);
 
-                    if (Health <= 0f)
-                    {
-                        FindObjectOfType<GameController>().GameOver();
-                    }
+                if (Health <= 0f)
+                {
+                    FindObjectOfType<GameController>().GameOver();
                 }
+            }
+        }
+
+        private void OnTriggerExit2D(Collider2D collision)
+        {
+            if(collision.gameObject.TryGetComponent<EnemyController>(out var enemy))
+            {
+                _currentAttackers--;
+
+                ManageRumble();
             }
         }
     }

@@ -1,9 +1,7 @@
 using Assets.Scripts.GameWorld;
 using Character;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
@@ -37,6 +35,8 @@ public class GameController : MonoBehaviour
 
     public void PauseGame()
     {
+        InputSystem.PauseHaptics();
+
         var playerRB = _player.GetComponent<Rigidbody2D>();
         _savedPlayerVelocity = playerRB.velocity;
         playerRB.velocity = Vector3.zero;
@@ -69,6 +69,8 @@ public class GameController : MonoBehaviour
         {
             tile.enabled = true;
         }
+
+        InputSystem.ResumeHaptics();
     }
 
     public void GameOver()
@@ -79,6 +81,7 @@ public class GameController : MonoBehaviour
 
     public void RestartGame()
     {
+        InputSystem.ResetHaptics();
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }
