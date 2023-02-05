@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.XInput;
+using UnityEngine.InputSystem.DualShock;
 using Assets.Scripts;
 using Assets.Scripts.Extensions;
 using System.Linq;
@@ -26,6 +28,7 @@ namespace Character
         private int _currentAttackers = 0;
 
         private bool _isPaused = false;
+        private bool _isDualshock;
 
         [SerializeField]
         private float DamageThreshold = 7.5f;
@@ -44,6 +47,10 @@ namespace Character
                 .GetComponentsInChildren<Image>()
                 .Where(x => x.name.Contains("Fill"))
                 .FirstOrDefault();
+
+            _isDualshock = Gamepad.current is DualShock4GamepadHID;
+
+            ManageRumble();
         }
 
         private void FixedUpdate()
@@ -58,15 +65,43 @@ namespace Character
         {
             if(_input.dash)
             {
-                Gamepad.current.SetMotorSpeeds(DashRumble.x, DashRumble.y);
-            }
-            else if (_currentAttackers > 0)
-            {
-                Gamepad.current.SetMotorSpeeds(HurtingRumble.x, HurtingRumble.y);
+                if (_isDualshock)
+                {
+                    Debug.Log("Setting light bar color to white");
+                    DualShock4GamepadHID.current.SetLightBarColor(Color.white);
+                }
+
+                SetRumble(DashRumble.x, DashRumble.y);
             }
             else
             {
-                Gamepad.current.ResetHaptics();
+                if (_currentAttackers > 0)
+                {
+                    SetRumble(HurtingRumble.x, HurtingRumble.y);
+                }
+                else
+                {
+                    SetRumble(0f, 0f);
+                }
+
+                if (_isDualshock)
+                {
+                    Debug.Log("Setting light bar color to green");
+                    DualShock4GamepadHID.current.SetLightBarColor(DataExtensions.LerpColor3(Color.green, Color.yellow, Color.white, 0.5f, Health / 100f));
+                }
+            }
+        }
+
+        private void SetRumble(float lowFrequency, float highFrequency)
+        {
+            if (_isDualshock)
+            {
+                Debug.Log($"Setting motor speeds to ${lowFrequency}, ${highFrequency}");
+                DualShock4GamepadHID.current.SetMotorSpeeds(lowFrequency, highFrequency);
+            }
+            else
+            {
+                Gamepad.current.SetMotorSpeeds(lowFrequency, highFrequency);
             }
         }
 

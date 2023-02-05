@@ -2,6 +2,7 @@ using Assets.Scripts.GameWorld;
 using Character;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.DualShock;
 using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
@@ -82,6 +83,8 @@ public class GameController : MonoBehaviour
     public void RestartGame()
     {
         InputSystem.ResetHaptics();
+        if (Gamepad.current is DualShock4GamepadHID) DualShockGamepad.current.SetLightBarColor(Color.clear);
+
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

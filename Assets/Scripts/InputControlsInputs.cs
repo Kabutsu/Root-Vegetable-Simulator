@@ -36,12 +36,15 @@ namespace Assets.Scripts
 
         private IEnumerator ResetDash()
         {
-            Gamepad.current.SetMotorSpeeds(0.75f, 0.25f);
-            canDash = false;
+            var playerController = FindObjectOfType<PlayerController>();
+            playerController.ManageRumble();
 
+            canDash = false;
             yield return new WaitForSeconds(dashDuration);
+
             dash = false;
-            FindObjectOfType<PlayerController>().ManageRumble();
+
+            playerController.ManageRumble();
 
             yield return new WaitForSeconds(dashCooldown);
             canDash = true;
