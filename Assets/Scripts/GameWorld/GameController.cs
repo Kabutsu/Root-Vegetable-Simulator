@@ -4,17 +4,22 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
 {
     [SerializeField]
     private PlayerController _player;
 
+    [SerializeField]
+    private GameObject GameOverUI;
+
     private Vector3 _savedPlayerVelocity;
 
     // Start is called before the first frame update
     void Start()
     {
+        GameOverUI.SetActive(false);
         enabled = false;
     }
 
@@ -69,10 +74,11 @@ public class GameController : MonoBehaviour
     public void GameOver()
     {
         PauseGame();
+        GameOverUI.SetActive(true);
     }
 
     public void RestartGame()
     {
-
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }
