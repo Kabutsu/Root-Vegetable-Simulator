@@ -77,5 +77,15 @@ namespace Assets.Scripts
                 isPaused = true;
             }
         }
+
+        public void OnEscapeAction(InputValue value)
+        {
+            var gameController = FindObjectOfType<GameController>();
+
+            if (isPaused || gameController.IsGameOver)
+            {
+                Application.Quit();
+            }
+        }
     }
 }

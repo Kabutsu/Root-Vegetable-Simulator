@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Enemy
   - PlatformSpecific
+  - QuitImage
   layers:
   - Default
   - TransparentFX

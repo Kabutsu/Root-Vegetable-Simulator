@@ -2,9 +2,11 @@ using Assets.Scripts.GameWorld;
 using Assets.Scripts.Extensions;
 using Character;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.DualShock;
 using UnityEngine.SceneManagement;
+using System.Linq;
 
 public class GameController : MonoBehaviour
 {
@@ -46,6 +48,23 @@ public class GameController : MonoBehaviour
                 text.ReplacePlatformText();
             }
         }
+
+        foreach (var btn in GameObject.FindGameObjectsWithTag("QuitImage"))
+        {
+            if (InputSystem.devices.Where(x => x is DualShock4GamepadHID).Any())
+            {
+                btn.GetComponent<Image>().sprite = Resources.Load<Sprite>("PS4/PS4_Triangle");
+            }
+            else if (Gamepad.all.Any())
+            {
+                btn.GetComponent<Image>().sprite = Resources.Load<Sprite>("Xbox/Xbox_Y");
+            }
+            else
+            {
+                btn.GetComponent<Image>().sprite = Resources.Load<Sprite>("Keyboard/Esc_Key_Light");
+            }
+        }
+
 
         GameOverUI.SetActive(false);
         PausedUI.SetActive(false);

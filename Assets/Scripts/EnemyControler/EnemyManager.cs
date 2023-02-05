@@ -42,6 +42,6 @@ public class EnemyManager : MonoBehaviour
 
         _scoreText.text = _score.ToString();
 
-        if (_score % 3 == 0) MaxEnemies++;
+        if (_score % 3 == 0) MaxEnemies += 3;
     }
 }
