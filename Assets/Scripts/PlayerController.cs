@@ -76,28 +76,15 @@ namespace Character
 
             if(_input.dash)
             {
-                if (_isDualshock)
-                {
-                    DualShock4GamepadHID.current.SetLightBarColor(Color.white);
-                }
-
                 SetRumble(DashRumble.x, DashRumble.y);
+            }
+            else if (_currentAttackers > 0)
+            {
+                SetRumble(HurtingRumble.x, HurtingRumble.y);
             }
             else
             {
-                if (_currentAttackers > 0)
-                {
-                    SetRumble(HurtingRumble.x, HurtingRumble.y);
-                }
-                else
-                {
-                    SetRumble(0f, 0f);
-                }
-
-                if (_isDualshock)
-                {
-                    DualShock4GamepadHID.current.SetLightBarColor(DataExtensions.LerpColor3(Color.green, Color.yellow, Color.white, 0.5f, Health / 100f));
-                }
+                SetRumble(0f, 0f);
             }
         }
 
@@ -194,7 +181,7 @@ namespace Character
 
                 Color healthColor = DataExtensions.LerpColor3(Color.green, Color.yellow, Color.red, 0.5f, Health / 100f);
                 _healthSliderImage.color = healthColor;
-                if (_isDualshock && !_input.dash) DualShock4GamepadHID.current.SetLightBarColor(healthColor);
+                if (_isDualshock) DualShock4GamepadHID.current.SetLightBarColor(healthColor);
 
                 if (Health <= 0f)
                 {

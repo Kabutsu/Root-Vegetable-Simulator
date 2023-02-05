@@ -23,8 +23,7 @@ namespace Assets.Scripts.Extensions
                     ButtonType.Start => "Options"
                 };
             }
-
-            if (Gamepad.all.Any())
+            else if (Gamepad.all.Any())
             {
                 return button switch
                 {
@@ -32,12 +31,14 @@ namespace Assets.Scripts.Extensions
                     ButtonType.Start => "Menu"
                 };
             }
-
-            return button switch
+            else
             {
-                ButtonType.QuickAction => "Space",
-                ButtonType.Start => "Enter"
-            };
+                return button switch
+                {
+                    ButtonType.QuickAction => "Space",
+                    ButtonType.Start => "Enter"
+                };
+            }
         }
     }
 
