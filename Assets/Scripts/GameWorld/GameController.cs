@@ -1,5 +1,6 @@
 using Assets.Scripts.GameWorld;
 using Character;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.DualShock;
@@ -7,6 +8,8 @@ using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
 {
+    public bool IsGameOver { get; private set; } = false;
+
     [SerializeField]
     private PlayerController _player;
 
@@ -76,7 +79,18 @@ public class GameController : MonoBehaviour
 
     public void GameOver()
     {
+        IsGameOver = true;
+
         PauseGame();
+
+        foreach(var obj in GameObject.FindGameObjectsWithTag("PlatformSpecific"))
+        {
+            if (obj.TryGetComponent<UnityEngine.UI.Text>(out var text))
+            {
+                text.text = text.text.Replace("$", GetPlatformSpecificQuickActionButton());
+            }
+        }
+
         GameOverUI.SetActive(true);
     }
 
@@ -85,6 +99,22 @@ public class GameController : MonoBehaviour
         InputSystem.ResetHaptics();
         if (Gamepad.current is DualShock4GamepadHID) DualShockGamepad.current.SetLightBarColor(Color.clear);
 
+        IsGameOver = false;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    private string GetPlatformSpecificQuickActionButton()
+    {
+        if (InputSystem.devices.Where(x => x is DualShock4GamepadHID).Any())
+        {
+            return "X";
+        }
+
+        if (Gamepad.all.Any())
+        {
+            return "A";
+        }
+
+        return "Space";
     }
 }

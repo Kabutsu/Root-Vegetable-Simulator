@@ -63,11 +63,12 @@ namespace Character
 
         public void ManageRumble()
         {
+            if (_isPaused || Gamepad.current == null) return;
+
             if(_input.dash)
             {
                 if (_isDualshock)
                 {
-                    Debug.Log("Setting light bar color to white");
                     DualShock4GamepadHID.current.SetLightBarColor(Color.white);
                 }
 
@@ -86,7 +87,6 @@ namespace Character
 
                 if (_isDualshock)
                 {
-                    Debug.Log("Setting light bar color to green");
                     DualShock4GamepadHID.current.SetLightBarColor(DataExtensions.LerpColor3(Color.green, Color.yellow, Color.white, 0.5f, Health / 100f));
                 }
             }
@@ -96,7 +96,6 @@ namespace Character
         {
             if (_isDualshock)
             {
-                Debug.Log($"Setting motor speeds to ${lowFrequency}, ${highFrequency}");
                 DualShock4GamepadHID.current.SetMotorSpeeds(lowFrequency, highFrequency);
             }
             else
@@ -178,7 +177,10 @@ namespace Character
             {
                 Health -= enemy.DmgPerFrame;
                 HealthSlider.value = Mathf.Max(Health, 0f);
-                _healthSliderImage.LerpColor3(Color.green, Color.yellow, Color.red, 0.5f, Health / 100f);
+
+                Color healthColor = DataExtensions.LerpColor3(Color.green, Color.yellow, Color.red, 0.5f, Health / 100f);
+                _healthSliderImage.color = healthColor;
+                if (_isDualshock && !_input.dash) DualShock4GamepadHID.current.SetLightBarColor(healthColor);
 
                 if (Health <= 0f)
                 {

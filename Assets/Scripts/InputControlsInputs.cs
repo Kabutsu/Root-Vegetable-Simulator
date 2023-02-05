@@ -24,8 +24,16 @@ namespace Assets.Scripts
             move = value.Get<Vector2>();
         }
 
-        public void OnDash(InputValue value)
+        public void OnQuickAction(InputValue value)
         {
+            var gameController = FindObjectOfType<GameController>();
+
+            if (gameController.IsGameOver)
+            {
+                gameController.RestartGame();
+                return;
+            }
+
             if (!dash)
             {
                 dash = canDash && value.isPressed;
