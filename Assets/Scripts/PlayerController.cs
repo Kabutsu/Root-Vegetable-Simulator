@@ -1,5 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.XInput;
+using UnityEngine.InputSystem.DualShock;
 using Assets.Scripts;
 using Assets.Scripts.Extensions;
 using System.Linq;
@@ -8,6 +11,8 @@ namespace Character
 {
     public class PlayerController : MonoBehaviour
     {
+        public Vector2 DashRumble = new Vector2(0.75f, 0.25f);
+        public Vector2 HurtingRumble = new Vector2(0.25f, 0.75f);
         public float MoveSpeed = 5f;
         public float DashSpeed = 15f;
         public float SpeedChangeRate = 12.5f;
@@ -19,15 +24,26 @@ namespace Character
         private InputControlsInputs _input;
         private ScrollBackground _background;
         private Image _healthSliderImage;
+        private AudioSource _audio;
         private float _speed;
+        private int _currentAttackers = 0;
 
         private bool _isPaused = false;
+        private bool _isDualshock;
 
         [SerializeField]
         private float DamageThreshold = 7.5f;
 
         [SerializeField]
         private Slider HealthSlider;
+
+        [SerializeField]
+        private AudioClip[] DashSound = new AudioClip[3];
+
+        private void Awake()
+        {
+            _audio = GetComponent<AudioSource>();
+        }
 
         // Start is called before the first frame update
         void Start()
@@ -40,6 +56,10 @@ namespace Character
                 .GetComponentsInChildren<Image>()
                 .Where(x => x.name.Contains("Fill"))
                 .FirstOrDefault();
+
+            _isDualshock = Gamepad.current is DualShock4GamepadHID;
+
+            ManageRumble();
         }
 
         private void FixedUpdate()
@@ -49,6 +69,54 @@ namespace Character
 
         public void Pause() => _isPaused = true;
         public void Resume() => _isPaused = false;
+
+        public void ManageRumble()
+        {
+            if (_isPaused || Gamepad.current == null) return;
+
+            if(_input.dash)
+            {
+                if (_isDualshock)
+                {
+                    DualShock4GamepadHID.current.SetLightBarColor(Color.white);
+                }
+
+                SetRumble(DashRumble.x, DashRumble.y);
+            }
+            else
+            {
+                if (_currentAttackers > 0)
+                {
+                    SetRumble(HurtingRumble.x, HurtingRumble.y);
+                }
+                else
+                {
+                    SetRumble(0f, 0f);
+                }
+
+                if (_isDualshock)
+                {
+                    DualShock4GamepadHID.current.SetLightBarColor(DataExtensions.LerpColor3(Color.green, Color.yellow, Color.white, 0.5f, Health / 100f));
+                }
+            }
+        }
+
+        public void PlaySound()
+        {
+            _audio.PlayOneShot(DashSound[Random.Range(0, 2)]);
+        }
+
+        private void SetRumble(float lowFrequency, float highFrequency)
+        {
+            if (_isDualshock)
+            {
+                DualShock4GamepadHID.current.SetMotorSpeeds(lowFrequency, highFrequency);
+            }
+            else
+            {
+                Gamepad.current.SetMotorSpeeds(lowFrequency, highFrequency);
+            }
+        }
 
         private void Move()
         {
@@ -99,38 +167,49 @@ namespace Character
 
         void OnTriggerEnter2D(Collider2D collision)
         {
-            if(!_isPaused)
+            if(!_isPaused && collision.gameObject.TryGetComponent<EnemyController>(out var enemy))
             {
-                var enemy = collision.gameObject.GetComponent<EnemyController>();
+                _currentAttackers++;
 
-                if (enemy != null)
-                {
-                    var myMomentum = _rigidBody.velocity.magnitude * _rigidBody.mass;
+                ManageRumble();
+
+                var myMomentum = _rigidBody.velocity.magnitude * _rigidBody.mass;
             
-                    if (_rigidBody.velocity.magnitude >= DamageThreshold)
-                    {
-                        enemy.WasHit(myMomentum, _rigidBody.velocity);
-                    }
+                if (_rigidBody.velocity.magnitude >= DamageThreshold)
+                {
+                    enemy.WasHit(myMomentum, _rigidBody.velocity);
                 }
             }
         }
 
         private void OnTriggerStay2D(Collider2D collision)
         {
-            if (!_isPaused)
+            if (!_isPaused
+                && collision.gameObject.TryGetComponent<EnemyController>(out var enemy)
+                && !enemy.Staggered
+                && _rigidBody.velocity.magnitude < DamageThreshold)
             {
-                var enemy = collision.gameObject.GetComponent<EnemyController>();
-                if (enemy != null && !enemy.Staggered && _rigidBody.velocity.magnitude < DamageThreshold)
-                {
-                    Health -= enemy.DmgPerFrame;
-                    HealthSlider.value = Mathf.Max(Health, 0f);
-                    _healthSliderImage.LerpColor3(Color.green, Color.yellow, Color.red, 0.5f, Health / 100f);
+                Health -= enemy.DmgPerFrame;
+                HealthSlider.value = Mathf.Max(Health, 0f);
 
-                    if (Health <= 0f)
-                    {
-                        FindObjectOfType<GameController>().GameOver();
-                    }
+                Color healthColor = DataExtensions.LerpColor3(Color.green, Color.yellow, Color.red, 0.5f, Health / 100f);
+                _healthSliderImage.color = healthColor;
+                if (_isDualshock && !_input.dash) DualShock4GamepadHID.current.SetLightBarColor(healthColor);
+
+                if (Health <= 0f)
+                {
+                    FindObjectOfType<GameController>().GameOver();
                 }
+            }
+        }
+
+        private void OnTriggerExit2D(Collider2D collision)
+        {
+            if(collision.gameObject.TryGetComponent<EnemyController>(out var enemy))
+            {
+                _currentAttackers--;
+
+                ManageRumble();
             }
         }
     }

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Character;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -23,8 +24,16 @@ namespace Assets.Scripts
             move = value.Get<Vector2>();
         }
 
-        public void OnDash(InputValue value)
+        public void OnQuickAction(InputValue value)
         {
+            var gameController = FindObjectOfType<GameController>();
+
+            if (gameController.IsGameOver)
+            {
+                gameController.RestartGame();
+                return;
+            }
+
             if (!dash)
             {
                 dash = canDash && value.isPressed;
@@ -35,10 +44,16 @@ namespace Assets.Scripts
 
         private IEnumerator ResetDash()
         {
-            canDash = false;
+            var playerController = FindObjectOfType<PlayerController>();
+            playerController.PlaySound();
+            playerController.ManageRumble();
 
+            canDash = false;
             yield return new WaitForSeconds(dashDuration);
+
             dash = false;
+
+            playerController.ManageRumble();
 
             yield return new WaitForSeconds(dashCooldown);
             canDash = true;

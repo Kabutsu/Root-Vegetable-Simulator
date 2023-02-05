@@ -13,6 +13,7 @@ public class EnemyController : MonoBehaviour
     private Vector3 _directionToPlayer;
     private Vector3 _localScale;
     private Vector3 _fluctuation;
+    private AudioSource _audio;
     private float _fluctuationBound;
 
     [SerializeField]
@@ -24,6 +25,13 @@ public class EnemyController : MonoBehaviour
     [SerializeField]
     private float MovementSpeed = 1.5f;
 
+    [SerializeField]
+    private AudioClip DespawnClip;
+
+    private void Awake()
+    {
+        _audio = GetComponent<AudioSource>();
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -74,6 +82,11 @@ public class EnemyController : MonoBehaviour
     public void WasHit(float momentum, Vector2 velocity)
     {
         Health -= momentum;
+
+        if (Health <= 0f)
+        {
+            _audio.PlayOneShot(DespawnClip);
+        }
 
         var direction = velocity.normalized;
         var distance = (direction * momentum * StaggerCooldown) / 2f;
