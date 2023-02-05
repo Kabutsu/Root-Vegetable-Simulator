@@ -1,6 +1,6 @@
 using Assets.Scripts.GameWorld;
+using Assets.Scripts.Extensions;
 using Character;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.DualShock;
@@ -9,6 +9,7 @@ using UnityEngine.SceneManagement;
 public class GameController : MonoBehaviour
 {
     public bool IsGameOver { get; private set; } = false;
+    private AudioSource _audio;
     private Vector3 _savedPlayerVelocity;
 
     [SerializeField]
@@ -18,7 +19,7 @@ public class GameController : MonoBehaviour
     private GameObject GameOverUI;
 
     [SerializeField]
-    private AudioSource Audio;
+    private GameObject PausedUI;
 
     [SerializeField]
     private AudioClip PlayMusic;
@@ -28,17 +29,26 @@ public class GameController : MonoBehaviour
 
     private void Awake()
     {
-        Audio = GetComponent<AudioSource>();
+        _audio = GetComponent<AudioSource>();
     }
 
     void Start()
     {
-        Audio.clip = PlayMusic;
-        Audio.volume = 0.5f;
-        Audio.loop = true;
-        Audio.Play();
+        _audio.clip = PlayMusic;
+        _audio.volume = 0.5f;
+        _audio.loop = true;
+        _audio.Play();
+
+        foreach (var obj in GameObject.FindGameObjectsWithTag("PlatformSpecific"))
+        {
+            if (obj.TryGetComponent<UnityEngine.UI.Text>(out var text))
+            {
+                text.ReplacePlatformText();
+            }
+        }
 
         GameOverUI.SetActive(false);
+        PausedUI.SetActive(false);
         enabled = false;
     }
 
@@ -63,7 +73,12 @@ public class GameController : MonoBehaviour
     public void PauseGame()
     {
         InputSystem.PauseHaptics();
-        Audio.volume = 0.33f;
+
+        if (!IsGameOver)
+        {
+            _audio.volume = 0.33f;
+            PausedUI.SetActive(true);
+        }
 
         var playerRB = _player.GetComponent<Rigidbody2D>();
         _savedPlayerVelocity = playerRB.velocity;
@@ -85,7 +100,9 @@ public class GameController : MonoBehaviour
 
     public void ResumeGame()
     {
-        Audio.volume = 0.5f;
+        PausedUI.SetActive(false);
+
+        _audio.volume = 0.5f;
         _player.enabled = true;
         _player.GetComponent<Rigidbody2D>().velocity = _savedPlayerVelocity;
 
@@ -108,17 +125,8 @@ public class GameController : MonoBehaviour
 
         PauseGame();
 
-        Audio.clip = GameOverMusic;
-        Audio.volume = 0.5f;
-        Audio.Play();
-
-        foreach(var obj in GameObject.FindGameObjectsWithTag("PlatformSpecific"))
-        {
-            if (obj.TryGetComponent<UnityEngine.UI.Text>(out var text))
-            {
-                text.text = text.text.Replace("$", GetPlatformSpecificQuickActionButton());
-            }
-        }
+        _audio.clip = GameOverMusic;
+        _audio.Play();
 
         GameOverUI.SetActive(true);
     }
@@ -130,20 +138,5 @@ public class GameController : MonoBehaviour
 
         IsGameOver = false;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-    }
-
-    private string GetPlatformSpecificQuickActionButton()
-    {
-        if (InputSystem.devices.Where(x => x is DualShock4GamepadHID).Any())
-        {
-            return "X";
-        }
-
-        if (Gamepad.all.Any())
-        {
-            return "A";
-        }
-
-        return "Space";
     }
 }
