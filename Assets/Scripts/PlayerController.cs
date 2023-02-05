@@ -59,6 +59,8 @@ namespace Character
 
             _isDualshock = Gamepad.current is DualShock4GamepadHID;
 
+            if (_isDualshock) DualShock4GamepadHID.current.SetLightBarColor(Color.green);
+
             ManageRumble();
         }
 
