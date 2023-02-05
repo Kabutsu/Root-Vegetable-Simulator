@@ -47,15 +47,16 @@ namespace Assets.Scripts
             var playerController = FindObjectOfType<PlayerController>();
             playerController.PlaySound();
             playerController.ManageRumble();
+            playerController.ShowDashUI(dashDuration, dashCooldown);
 
             canDash = false;
-            yield return new WaitForSeconds(dashDuration);
+            yield return new WaitForSeconds(dashDuration + 0.1f);
 
             dash = false;
 
             playerController.ManageRumble();
 
-            yield return new WaitForSeconds(dashCooldown);
+            yield return new WaitForSeconds(dashCooldown + 0.2f);
             canDash = true;
         }
 

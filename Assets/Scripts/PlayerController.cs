@@ -6,6 +6,7 @@ using UnityEngine.InputSystem.DualShock;
 using Assets.Scripts;
 using Assets.Scripts.Extensions;
 using System.Linq;
+using System.Collections;
 
 namespace Character
 {
@@ -36,6 +37,9 @@ namespace Character
 
         [SerializeField]
         private Slider HealthSlider;
+
+        [SerializeField]
+        private Slider DashSlider;
 
         [SerializeField]
         private AudioClip[] DashSound = new AudioClip[3];
@@ -90,11 +94,6 @@ namespace Character
             }
         }
 
-        public void PlaySound()
-        {
-            _audio.PlayOneShot(DashSound[Random.Range(0, 2)]);
-        }
-
         private void SetRumble(float lowFrequency, float highFrequency)
         {
             if (_isDualshock)
@@ -104,6 +103,42 @@ namespace Character
             else
             {
                 Gamepad.current.SetMotorSpeeds(lowFrequency, highFrequency);
+            }
+        }
+
+        public void PlaySound()
+        {
+            _audio.PlayOneShot(DashSound[Random.Range(0, 2)]);
+        }
+
+        public void ShowDashUI(float dashDuration, float dashCooldown)
+        {
+            StartCoroutine(DashCooldownUi(dashDuration, dashCooldown));
+        }
+
+        private IEnumerator DashCooldownUi(float dashDuration, float dashCooldown)
+        {
+            float uiDuration = dashDuration / 4f;
+            float waitDuration = 1 - uiDuration;
+
+            float remaining = uiDuration;
+
+            while (remaining >= 0f)
+            {
+                DashSlider.value = Mathf.Max(remaining / uiDuration, 0);
+                remaining -= Time.deltaTime;
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(waitDuration);
+
+            float elapsed = 0f;
+
+            while (elapsed < dashCooldown)
+            {
+                DashSlider.value = Mathf.Min(elapsed / dashCooldown, 1f);
+                elapsed += Time.deltaTime;
+                yield return null;
             }
         }
 
